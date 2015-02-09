@@ -24,13 +24,13 @@
 #include "ga-wapi.h"
 
 #ifdef MPI
-extern ARMCI_Group* ga_get_armci_group_(int);
+extern ARMCI_Group* ga_get_armci_group_(int); /* RACE */
 #endif
 
 /* work arrays used in all routines */
-static Integer dims[MAXDIM], ld[MAXDIM-1];
-static Integer lo[MAXDIM],hi[MAXDIM];
-static Integer one_arr[MAXDIM]={1,1,1,1,1,1,1};
+static Integer dims[MAXDIM], ld[MAXDIM-1]; /* RACE */
+static Integer lo[MAXDIM],hi[MAXDIM]; /* RACE */
+static Integer one_arr[MAXDIM]={1,1,1,1,1,1,1}; /* RACE */
 
 #define GET_ELEMS(ndim,lo,hi,ld,pelems){\
 int _i;\

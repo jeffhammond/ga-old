@@ -24,7 +24,7 @@
 #include "ga-wapi.h"
 
 #ifdef MPI
-extern ARMCI_Group* ga_get_armci_group_(int); /* RACE */
+extern ARMCI_Group* ga_get_armci_group_(int);
 #endif
 
 /* work arrays used in all routines */

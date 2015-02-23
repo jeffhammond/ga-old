@@ -123,9 +123,6 @@ void pnga_pgroup_sync(Integer grp_id)
        for(int p=0; p<PGRP_LIST[grp_id].map_nproc; p++) {
           ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[grp_id].group, p));
        }
-#ifdef BGML 
-       ARMCI_Barrier();
-#endif
        pnga_msg_pgroup_sync(grp_id);
        if (GA_fence_set) {
            bzero(fence_array,(int)GAnproc);
@@ -137,9 +134,6 @@ void pnga_pgroup_sync(Integer grp_id)
     } else {
        /* printf("p[%d] calling regular sync in ga_pgroup_sync\n",GAme); */
        ARMCI_AllFence();
-#ifdef BGML 
-       ARMCI_Barrier();
-#endif
        pnga_msg_pgroup_sync(grp_id);
        if (GA_fence_set) {
            bzero(fence_array,(int)GAnproc);
@@ -162,9 +156,6 @@ void pnga_sync()
 {
     if (GA_Default_Proc_Group == -1) {
       ARMCI_AllFence();
-#ifdef BGML
-      ARMCI_Barrier();
-#endif
 	  pnga_msg_sync();
 	  if(GA_fence_set) {
           bzero(fence_array,(int)GAnproc);
@@ -172,9 +163,6 @@ void pnga_sync()
 	  GA_fence_set=0;
     } else {
           Integer grp_id = (Integer)GA_Default_Proc_Group;
-#ifdef BGML
-          ARMCI_Barrier();
-#endif
           pnga_pgroup_sync(grp_id);
     }
 #ifdef CHECK_MA
@@ -4714,17 +4702,6 @@ void *pval;
        /*printf("\n%d:proc=%d",GAme,proc);fflush(stdout);*/
     }
 
-    /**
-     * On BGL, when datatype is C_LONGLONG or if USE_INTEGER8 is defined,
-     * (i.e. default Fortran integer is C_LONGLONG), there is no support for
-     * 64-bit integers in ARMCI_Rmw. Therefore, offset by 4 bytes as BGL uses
-     * Big-endian format, and increment only the 32-bit value.
-     * NOTE: On BGL, ARMCI/BGML doesnot support 64-bit integer increment.
-     */
-#ifdef BGML
-    if(GA[handle].type==C_LONGLONG) ptr = ((char*)ptr) + 4 ;
-#endif
-    
     ARMCI_Rmw(optype, pval, (int*)ptr, (int)inc, (int)proc);
 
    GA_POP_NAME;

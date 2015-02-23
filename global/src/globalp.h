@@ -5,10 +5,6 @@
 
 #include "gaconfig.h"
 
-#ifdef __crayx1
-#undef CRAY
-#endif
-
 #ifdef FALSE
 #undef FALSE
 #endif

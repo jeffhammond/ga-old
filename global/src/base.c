@@ -172,7 +172,6 @@ int ga_spare_procs; /* RACE */
 #define ga_ComputeIndexM(_index, _ndim, _subscript, _dims)                     \
 {                                                                              \
   Integer  _i, _factor=1;                                                      \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0,*(_index)=0; _i<_ndim; _i++){                                       \
       *(_index) += _subscript[_i]*_factor;                                     \
       if(_i<_ndim-1)_factor *= _dims[_i];                                      \
@@ -185,7 +184,6 @@ int ga_spare_procs; /* RACE */
 #define ga_UpdateSubscriptM(_ndim, _subscript, _lo, _hi, _dims)\
 {                                                                              \
   Integer  _i;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        if(_subscript[_i] < _hi[_i]) { _subscript[_i]++; break;}                \
        _subscript[_i] = _lo[_i];                                               \
@@ -199,7 +197,6 @@ int ga_spare_procs; /* RACE */
 {                                                                              \
   Integer  _i;                                                                 \
   *_elems = 1;                                                                 \
-  __CRAYX1_PRAGMA("_CRI novector");                                            \
   for(_i=0; _i<_ndim; _i++){                                                   \
        *_elems *= _hi[_i]-_lo[_i] +1;                                          \
        _subscript[_i] = _lo[_i];                                               \
@@ -648,7 +645,6 @@ void pnga_initialize_ltd(Integer mem_limit)
 {\
 int _d;\
     if(ndim<1||ndim>MAXDIM) pnga_error("unsupported number of dimensions",ndim);\
-  __CRAYX1_PRAGMA("_CRI novector");                                         \
     for(_d=0; _d<ndim; _d++)\
          if(dims[_d]<1)pnga_error("wrong dimension specified",dims[_d]);\
 }
@@ -3278,9 +3274,6 @@ logical pnga_locate_nnodes( Integer g_a,
   ga_check_handleM(g_a, "nga_locate_nnodes");
 
   ga_handle = GA_OFFSET + g_a;
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
   for(d = 0; d< GA[ga_handle].ndim; d++)
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
@@ -3290,9 +3283,6 @@ logical pnga_locate_nnodes( Integer g_a,
   if (!use_blocks) {
     /* find "processor coordinates" for the top left corner and store them
      * in ProcT */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], lo[d], &procT[d]);
@@ -3301,9 +3291,6 @@ logical pnga_locate_nnodes( Integer g_a,
 
     /* find "processor coordinates" for the right bottom corner and store
      * them in procB */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], hi[d], &procB[d]);
@@ -3361,9 +3348,6 @@ logical pnga_locate_nnodes( Integer g_a,
   }
   return(TRUE);
 }
-#ifdef __crayx1
-#pragma _CRI inline nga_locate_nnodes_
-#endif
 
 
 /**
@@ -3411,9 +3395,6 @@ logical pnga_locate_region( Integer g_a,
   ga_check_handleM(g_a, "nga_locate_region");
 
   ga_handle = GA_OFFSET + g_a;
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
   for(d = 0; d< GA[ga_handle].ndim; d++)
     if((lo[d]<1 || hi[d]>GA[ga_handle].dims[d]) ||(lo[d]>hi[d]))return FALSE;
 
@@ -3423,9 +3404,6 @@ logical pnga_locate_region( Integer g_a,
   if (!use_blocks) {
     /* find "processor coordinates" for the top left corner and store them
      * in ProcT */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], lo[d], &procT[d]);
@@ -3434,9 +3412,6 @@ logical pnga_locate_region( Integer g_a,
 
     /* find "processor coordinates" for the right bottom corner and store
      * them in procB */
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
     for(d = 0, dpos = 0; d< GA[ga_handle].ndim; d++){
       findblock(GA[ga_handle].mapc + dpos, GA[ga_handle].nblock[d], 
           GA[ga_handle].scale[d], hi[d], &procB[d]);
@@ -3464,14 +3439,8 @@ logical pnga_locate_region( Integer g_a,
 
       offset = *np *(ndim*2); /* location in map to put patch range */
 
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
       for(d = 0; d< ndim; d++)
         map[d + offset ] = lo[d] < _lo[d] ? _lo[d] : lo[d];
-#ifdef __crayx1
-#pragma _CRI novector
-#endif
       for(d = 0; d< ndim; d++)
         map[ndim + d + offset ] = hi[d] > _hi[d] ? _hi[d] : hi[d];
 
@@ -3527,9 +3496,6 @@ logical pnga_locate_region( Integer g_a,
   }
   return(TRUE);
 }
-#ifdef __crayx1
-#pragma _CRI inline pnga_locate_region
-#endif
 
 /**
  *  Returns the processor grid for the global array

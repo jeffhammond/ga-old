@@ -69,10 +69,6 @@
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
-#if !defined(CRAY_YMP)
-#define BYTE_ADDRESSABLE_MEMORY
-#endif
-
 #ifdef PROFILE_OLD
 #include "ga_profile.h"
 #endif

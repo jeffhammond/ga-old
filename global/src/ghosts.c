@@ -68,10 +68,6 @@ extern armci_hdl_t* get_armci_nbhandle(Integer *);
 #define INVALID_MA_HANDLE -1 
 #define NEAR_INT(x) (x)< 0.0 ? ceil( (x) - 0.5) : floor((x) + 0.5)
 
-#if !defined(CRAY_YMP)
-#define BYTE_ADDRESSABLE_MEMORY
-#endif
-
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
 

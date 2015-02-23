@@ -81,7 +81,6 @@
 
 char *fence_array; /* RACE */
 static int GA_fence_set=0; /* RACE */
-Integer *_ga_map; /* RACE */      /* used in get/put/acc */
 
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
@@ -207,12 +206,6 @@ void pnga_init_fence()
 
 void gai_init_onesided()
 {
-    /* not thread-safe...
-    _ga_map = (Integer*)malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
-    if(!_ga_map)
-        pnga_error("ga_init:malloc failed (_ga_map)",0);
-    */
-
     fence_array = calloc((size_t)GAnproc,1);
     if(!fence_array)
         pnga_error("ga_init:calloc failed",0);
@@ -221,10 +214,6 @@ void gai_init_onesided()
 
 void gai_finalize_onesided()
 {
-    /* not thread-safe...
-    free(_ga_map);
-    _ga_map = NULL;
-    */
     free(fence_array);
     fence_array = NULL;
 }
@@ -555,6 +544,8 @@ void ngai_put_common(Integer g_a,
   int counter=0;
 #endif
 
+  Integer *_ga_map;
+
   int _stride_rem[MAXDIM+1], _stride_loc[MAXDIM+1], _count[MAXDIM+1];
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
 
@@ -584,7 +575,7 @@ void ngai_put_common(Integer g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
     if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
     if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
@@ -1285,6 +1276,8 @@ void ngai_get_common(Integer g_a,
   int _stride_rem[MAXDIM+1], _stride_loc[MAXDIM+1], _count[MAXDIM+1];
   int *stride_rem=&_stride_rem[1], *stride_loc=&_stride_loc[1], *count=&_count[1];
 
+  Integer * _ga_map;
+
   GA_PUSH_NAME("nga_get_common");
 
   ga_check_handleM(g_a, "nga_get_common");
@@ -1311,7 +1304,7 @@ void ngai_get_common(Integer g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
     if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
     if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
@@ -1843,6 +1836,7 @@ void ngai_acc_common(Integer g_a,
   Integer n_rstrctd;
   Integer *rank_rstrctd;
 
+  Integer * _ga_map;
 
   GA_PUSH_NAME("nga_acc_common");
 
@@ -1873,7 +1867,7 @@ void ngai_acc_common(Integer g_a,
        by a given processor, and np contains the total number of
        processors that contain some portion of the patch.
      */
-    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
     if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
     if(!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np ))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
@@ -4880,6 +4874,8 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   int i, proc, ndim;
   int use_blocks;
 
+  Integer * _ga_map;
+
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
   use_blocks = GA[handle].block_flag;
@@ -4903,7 +4899,7 @@ void pnga_strided_put(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
     if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
     if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
@@ -5245,6 +5241,8 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   int i, proc, ndim;
   int use_blocks;
 
+  Integer * _ga_map;
+
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
   use_blocks = GA[handle].block_flag;
@@ -5268,7 +5266,7 @@ void pnga_strided_get(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
     if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
     if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);
@@ -5634,6 +5632,8 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
   int i, optype=-1, proc, ndim;
   int use_blocks;
 
+  Integer * _ga_map;
+
   size = GA[handle].elemsize;
   ndim = GA[handle].ndim;
   type = GA[handle].type;
@@ -5666,7 +5666,7 @@ void pnga_strided_acc(Integer g_a, Integer *lo, Integer *hi, Integer *skip,
        lower and upper indices of the portion of the total patch held by
        a given processor, and np contains the total number of processors
        that contain some portion of the patch. */
-    Integer * _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
+    _ga_map = malloc((size_t)(GAnproc*2*MAXDIM+1)*sizeof(Integer));
     if(!_ga_map) pnga_error("malloc failed _ga_map",GAnproc*2*MAXDIM+1);
     if (!pnga_locate_region(g_a, lo, hi, _ga_map, GA_proclist, &np))
       ga_RegionError(pnga_ndim(g_a), lo, hi, g_a);

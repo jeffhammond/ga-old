@@ -620,10 +620,10 @@ am__libga_la_SOURCES_DIST = compat/random.c ma/error.c ma/f2c.c \
 	global/src/global.util.c global/src/hsort.scat.c \
 	global/src/matmul.c global/src/matmul.h global/src/matrix.c \
 	global/src/nbutil.c global/src/onesided.c \
-	global/src/putnotify.c global/src/peigstubs.c \
-	global/src/scalapack.fh global/src/sclstubs.c \
-	global/src/select.c global/src/sparse.c global/src/types.xh \
-	global/src/types2.xh global/src/complex.F \
+	global/src/putnotify.c global/src/gafence.c \
+	global/src/peigstubs.c global/src/scalapack.fh \
+	global/src/sclstubs.c global/src/select.c global/src/sparse.c \
+	global/src/types.xh global/src/types2.xh global/src/complex.F \
 	global/src/ga_diag_seq.F global/src/rsg.f \
 	global/src/ga_dgemmf.F global/src/ga_diag.F \
 	global/src/scalapack.F global/src/ga_ckpt.c \
@@ -704,10 +704,11 @@ am_libga_la_OBJECTS = compat/random.lo ma/error.lo ma/f2c.lo ma/ma.lo \
 	global/src/hsort.scat.lo global/src/matmul.lo \
 	global/src/matrix.lo global/src/nbutil.lo \
 	global/src/onesided.lo global/src/putnotify.lo \
-	global/src/peigstubs.lo global/src/sclstubs.lo \
-	global/src/select.lo global/src/sparse.lo $(am__objects_2) \
-	$(am__objects_3) $(am__objects_4) $(am__objects_5) \
-	$(am__objects_6) pario/dra/buffers.lo pario/dra/capi.lo \
+	global/src/gafence.lo global/src/peigstubs.lo \
+	global/src/sclstubs.lo global/src/select.lo \
+	global/src/sparse.lo $(am__objects_2) $(am__objects_3) \
+	$(am__objects_4) $(am__objects_5) $(am__objects_6) \
+	pario/dra/buffers.lo pario/dra/capi.lo \
 	pario/dra/disk.arrays.lo pario/dra/disk.param.lo \
 	pario/dra/env.lo pario/dra/fortran.lo pario/dra/patch.util.lo \
 	pario/eaf/eaf.lo pario/eaf/eaf_f2c.lo pario/elio/elio.lo \
@@ -4248,21 +4249,21 @@ libga_la_SOURCES = compat/random.c ma/error.c ma/f2c.c ma/ma.c ma/ma.h \
 	global/src/global.util.c global/src/hsort.scat.c \
 	global/src/matmul.c global/src/matmul.h global/src/matrix.c \
 	global/src/nbutil.c global/src/onesided.c \
-	global/src/putnotify.c global/src/peigstubs.c \
-	global/src/scalapack.fh global/src/sclstubs.c \
-	global/src/select.c global/src/sparse.c global/src/types.xh \
-	global/src/types2.xh $(am__append_11) $(am__append_12) \
-	$(am__append_13) $(am__append_14) $(am__append_15) \
-	pario/dra/buffers.c pario/dra/buffers.h pario/dra/capi.c \
-	pario/dra/disk.arrays.c pario/dra/disk.param.c \
-	pario/dra/draf2c.h pario/dra/drap.h pario/dra/env.c \
-	pario/dra/fortran.c pario/dra/patch.util.c pario/eaf/eaf.c \
-	pario/eaf/eaf_f2c.c pario/eaf/eafP.h pario/elio/elio.c \
-	pario/elio/eliop.h pario/elio/pablo.h pario/elio/stat.c \
-	pario/sf/sf_capi.c pario/sf/sff2c.h pario/sf/sf_fortran.c \
-	pario/sf/shared.files.c $(am__append_41) gaf2c/gaf2c.c \
-	gaf2c/drand.c $(am__append_48) tcgmsg/capi.c tcgmsg/fapi.c \
-	$(am__append_51)
+	global/src/putnotify.c global/src/gafence.c \
+	global/src/peigstubs.c global/src/scalapack.fh \
+	global/src/sclstubs.c global/src/select.c global/src/sparse.c \
+	global/src/types.xh global/src/types2.xh $(am__append_11) \
+	$(am__append_12) $(am__append_13) $(am__append_14) \
+	$(am__append_15) pario/dra/buffers.c pario/dra/buffers.h \
+	pario/dra/capi.c pario/dra/disk.arrays.c \
+	pario/dra/disk.param.c pario/dra/draf2c.h pario/dra/drap.h \
+	pario/dra/env.c pario/dra/fortran.c pario/dra/patch.util.c \
+	pario/eaf/eaf.c pario/eaf/eaf_f2c.c pario/eaf/eafP.h \
+	pario/elio/elio.c pario/elio/eliop.h pario/elio/pablo.h \
+	pario/elio/stat.c pario/sf/sf_capi.c pario/sf/sff2c.h \
+	pario/sf/sf_fortran.c pario/sf/shared.files.c $(am__append_41) \
+	gaf2c/gaf2c.c gaf2c/drand.c $(am__append_48) tcgmsg/capi.c \
+	tcgmsg/fapi.c $(am__append_51)
 
 # As of ga-5-2 libarmci is no longer rolled up into libga.
 libga_la_LIBADD = $(SCALAPACK_LIBS) $(LAPACK_LIBS) $(BLAS_LIBS) \
@@ -5340,6 +5341,8 @@ global/src/nbutil.lo: global/src/$(am__dirstamp) \
 global/src/onesided.lo: global/src/$(am__dirstamp) \
 	global/src/$(DEPDIR)/$(am__dirstamp)
 global/src/putnotify.lo: global/src/$(am__dirstamp) \
+	global/src/$(DEPDIR)/$(am__dirstamp)
+global/src/gafence.lo: global/src/$(am__dirstamp) \
 	global/src/$(DEPDIR)/$(am__dirstamp)
 global/src/peigstubs.lo: global/src/$(am__dirstamp) \
 	global/src/$(DEPDIR)/$(am__dirstamp)
@@ -7149,6 +7152,7 @@ distclean-compile:
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/ga_solve_seq.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/ga_symmetr.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/ga_trace.Plo@am__quote@
+@AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/gafence.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/ghosts.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/global.nalg.Plo@am__quote@
 @AMDEP_TRUE@@am__include@ @am__quote@global/src/$(DEPDIR)/global.npatch.Plo@am__quote@

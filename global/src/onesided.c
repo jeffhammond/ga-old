@@ -79,11 +79,6 @@
 /*uncomment line below to verify consistency of MA in every sync */
 /*#define CHECK_MA yes */
 
-#ifndef DISABLE_UNSAFE_GA_FENCE
-char *fence_array; /* RACE */
-static int GA_fence_set=0; /* RACE */
-#endif // DISABLE_UNSAFE_GA_FENCE
-
 extern void armci_read_strided(void*, int, int*, int*, char*);
 extern void armci_write_strided(void*, int, int*, int*, char*);
 extern armci_hdl_t* get_armci_nbhandle(Integer *);
@@ -107,12 +102,7 @@ void pnga_pgroup_sync(Integer grp_id)
           ARMCI_Fence(ARMCI_Absolute_id(&PGRP_LIST[grp_id].group, p));
        }
        pnga_msg_pgroup_sync(grp_id);
-#  ifndef DISABLE_UNSAFE_GA_FENCE
-       if (GA_fence_set) {
-           bzero(fence_array,(int)GAnproc);
-       }
-       GA_fence_set=0;
-#  endif // DISABLE_UNSAFE_GA_FENCE
+       gai_fence_reset();
 #else // MPI
        pnga_error("ga_pgroup_sync_(): MPI not defined. ga_msg_pgroup_sync_()  can be called only if GA is built with MPI", 0);
 #endif // MPI
@@ -120,12 +110,7 @@ void pnga_pgroup_sync(Integer grp_id)
        /* printf("p[%d] calling regular sync in ga_pgroup_sync\n",GAme); */
        ARMCI_AllFence();
        pnga_msg_pgroup_sync(grp_id);
-#  ifndef DISABLE_UNSAFE_GA_FENCE
-       if (GA_fence_set) {
-           bzero(fence_array,(int)GAnproc);
-       }
-       GA_fence_set=0;
-#  endif // DISABLE_UNSAFE_GA_FENCE
+       gai_fence_reset();
     }
 #ifdef CHECK_MA
     Integer status = MA_verify_allocator_stuff();
@@ -144,12 +129,7 @@ void pnga_sync(void)
     if (GA_Default_Proc_Group == -1) {
       ARMCI_AllFence();
 	  pnga_msg_sync();
-#  ifndef DISABLE_UNSAFE_GA_FENCE
-	  if(GA_fence_set) {
-          bzero(fence_array,(int)GAnproc);
-      }
-	  GA_fence_set=0;
-#  endif // DISABLE_UNSAFE_GA_FENCE
+      gai_fence_reset();
     } else {
           Integer grp_id = (Integer)GA_Default_Proc_Group;
           pnga_pgroup_sync(grp_id);
@@ -158,62 +138,6 @@ void pnga_sync(void)
     Integer status = MA_verify_allocator_stuff();
 #endif
 }
-
-#ifndef DISABLE_UNSAFE_GA_FENCE
-
-/**
- *  Wait until all requests initiated by calling process are completed
- */
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_fence = pnga_fence
-#endif
-
-void pnga_fence(void)
-{
-    if(GA_fence_set<1) {
-        pnga_error("ga_fence: fence not initialized",0);
-    }
-
-    /* Why does this not set the fence array to zero? */
-    GA_fence_set--;
-
-    for(int proc=0; proc<GAnproc; proc++) {
-        if(fence_array[proc]) {
-            ARMCI_Fence(proc);
-        }
-    }
-    bzero(fence_array,(int)GAnproc);
-    return;
-}
-
-/**
- *  Initialize tracing of request completion
- */
-#if HAVE_SYS_WEAK_ALIAS_PRAGMA
-#   pragma weak wnga_init_fence = pnga_init_fence
-#endif
-
-void pnga_init_fence(void)
-{
-    /* Why is this not setting it to 1? */
-    GA_fence_set++;
-}
-
-void gai_init_onesided(void)
-{
-    fence_array = calloc((size_t)GAnproc,1);
-    if(!fence_array)
-        pnga_error("ga_init:calloc failed",0);
-}
-
-
-void gai_finalize_onesided(void)
-{
-    free(fence_array);
-    fence_array = NULL;
-}
-
-#endif // DISABLE_UNSAFE_GA_FENCE
 
 /*\ prepare permuted list of processes for remote ops
 \*/
@@ -651,9 +575,7 @@ void ngai_put_common(Integer g_a,
             /* BJP */
             proc = PGRP_LIST[p_handle].inv_map_proc_list[proc];
           }
-# ifndef DISABLE_UNSAFE_GA_FENCE
-          if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+          gai_fence_set(proc);
 
 #ifdef PERMUTE_PIDS
           if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
@@ -785,9 +707,7 @@ void ngai_put_common(Integer g_a,
                 gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
                 proc = pinv;
-# ifndef DISABLE_UNSAFE_GA_FENCE
-                if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+                gai_fence_set(proc);
 
 #ifndef NO_GA_STATS	    
                 if(proc == GAme){
@@ -969,9 +889,7 @@ void ngai_put_common(Integer g_a,
                 gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
                 proc = pinv;
-# ifndef DISABLE_UNSAFE_GA_FENCE
-                if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+                gai_fence_set(proc);
 
 #ifndef NO_GA_STATS	    
                 if(proc == GAme){
@@ -1367,9 +1285,7 @@ void ngai_get_common(Integer g_a,
                 gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
                 proc = pinv;
-# ifndef DISABLE_UNSAFE_GA_FENCE
-                if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+                gai_fence_set(proc);
 
 #ifndef NO_GA_STATS	    
                 if(proc == GAme){
@@ -1550,9 +1466,7 @@ void ngai_get_common(Integer g_a,
                 gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
                 proc = pinv;
-# ifndef DISABLE_UNSAFE_GA_FENCE
-                if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+                gai_fence_set(proc);
 
 #ifndef NO_GA_STATS	    
                 if(proc == GAme){
@@ -1797,9 +1711,7 @@ void ngai_acc_common(Integer g_a,
             proc = (int)PGRP_LIST[p_handle].inv_map_proc_list[proc];
           }
 
-# ifndef DISABLE_UNSAFE_GA_FENCE
-          if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+          gai_fence_set(proc);
 
 #ifdef PERMUTE_PIDS
           if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
@@ -1920,9 +1832,7 @@ void ngai_acc_common(Integer g_a,
                 gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
                 proc = pinv;
-# ifndef DISABLE_UNSAFE_GA_FENCE
-                if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+                gai_fence_set(proc);
 
 #ifndef NO_GA_STATS	    
                 if(proc == GAme){
@@ -2093,9 +2003,7 @@ void ngai_acc_common(Integer g_a,
                 gam_setstride(ndim, size, ld, ldrem, stride_rem, stride_loc);
 
                 proc = pinv;
-# ifndef DISABLE_UNSAFE_GA_FENCE
-                if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+                gai_fence_set(proc);
 
 #ifndef NO_GA_STATS	    
                 if(proc == GAme){
@@ -2979,9 +2887,7 @@ void gai_scatter_acc_local(Integer g_a, void *v,Integer *i,Integer *j,
   desc.dst_ptr_array = ptr_dst;
   desc.ptr_array_len = (int)nv;
 
-# ifndef DISABLE_UNSAFE_GA_FENCE
-  if(GA_fence_set)fence_array[proc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+  gai_fence_set(proc);
 
 #ifdef PERMUTE_PIDS
     if(GA_Proc_list) proc = GA_inv_Proc_list[proc];
@@ -3667,9 +3573,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             } else {
               iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]];
             }
-# ifndef DISABLE_UNSAFE_GA_FENCE
-            if(GA_fence_set) fence_array[iproc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+            gai_fence_set(iproc);
 
             rc=ARMCI_PutV(&desc, 1, (int)iproc);
             if(rc) pnga_error("scatter failed in armci",rc);
@@ -3689,9 +3593,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
               if (p_handle >= 0) {
                 iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
               }
-# ifndef DISABLE_UNSAFE_GA_FENCE
-              if(GA_fence_set) fence_array[iproc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+              gai_fence_set(iproc);
 
               rc=ARMCI_PutV(&desc, 1, (int)iproc);
               if(rc) pnga_error("scatter failed in armci",rc);
@@ -3715,9 +3617,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
               if (p_handle >= 0) {
                 iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
               }
-# ifndef DISABLE_UNSAFE_GA_FENCE
-              if(GA_fence_set) fence_array[iproc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+              gai_fence_set(iproc);
 
               rc=ARMCI_PutV(&desc, 1, (int)iproc);
               if(rc) pnga_error("scatter failed in armci",rc);
@@ -3788,9 +3688,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
             } else {
               iproc = PGRP_LIST[p_handle].inv_map_proc_list[aproc[k]];
             }
-# ifndef DISABLE_UNSAFE_GA_FENCE
-            if(GA_fence_set) fence_array[iproc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+            gai_fence_set(iproc);
 
             if(alpha != NULL) {
               int optype=-1;
@@ -3820,9 +3718,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
               if (p_handle >= 0) {
                 iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
               }
-# ifndef DISABLE_UNSAFE_GA_FENCE
-              if(GA_fence_set) fence_array[iproc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+              gai_fence_set(iproc);
 
               if(alpha != NULL) {
                 int optype=-1;
@@ -3856,9 +3752,7 @@ void gai_gatscat(int op, Integer g_a, void* v, Integer subscript[],
               if (p_handle >= 0) {
                 iproc = PGRP_LIST[p_handle].inv_map_proc_list[iproc];
               }
-# ifndef DISABLE_UNSAFE_GA_FENCE
-              if(GA_fence_set) fence_array[iproc]=1;
-# endif // DISABLE_UNSAFE_GA_FENCE
+              gai_fence_set(iproc);
 
               if(alpha != NULL) {
                 int optype=-1;

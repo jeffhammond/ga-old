@@ -32,7 +32,7 @@ void fix_c_string_for_f(char *s, int len)
 
 void fix_f_string_for_c(char *s, int len)
 {
-    for (size_t i=len-1; s[i] == ' ' && i>=0; i--) {
+    for (ssize_t i=len-1; s[i] == ' ' && i>=0; i--) {
         s[i] = '\0';
     }
 }]])],

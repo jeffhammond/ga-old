@@ -161,7 +161,10 @@ config.fh: config.h
 # standard C functions and such sources are conditionally compiled based on
 # results from configure tests, without the "random" implementation the
 # m4-generated tests always fail for scatter and copy_patch.
-libga_la_SOURCES += compat/random.c
+#libga_la_SOURCES += compat/random.c
+#
+# Jeff: random.c is garbage code and has been removed.
+#
 
 ##############################################################################
 # ma

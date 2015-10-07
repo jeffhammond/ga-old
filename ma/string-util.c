@@ -47,24 +47,21 @@
  */
 /* ------------------------------------------------------------------------- */
 
-unsigned int str_len(s)
-    char        *s;        /* string */
+unsigned int str_len(char * s)
 {
-    int            length = 0;
+    int length = 0;
 
     /* see <Global Comment 1> */
-    if (!s)
-    {
+    if (!s) {
         /* length of Nstring is 0 */
-        return(0);
+        return 0;
     }
 
-    while (*s++)
-    {
+    while (*s++) {
         length++;
     }
 
-    return(length);
+    return length;
 }
 
 /* ------------------------------------------------------------------------- */
@@ -80,18 +77,13 @@ unsigned int str_len(s)
  */
 /* ------------------------------------------------------------------------- */
 
-int str_match(s, slist, n)
-    char        *s;        /* string to match */
-    char        *slist[];    /* list of strings to search */
-    unsigned int    n;        /* # of strings in slist */
+int str_match(char * s, char * slist[], int n)
 {
-    size_t     i;        /* loop index */
     size_t     length;        /* of s */
     int        match;        /* index of string in slist matched by s */
 
     /* see <Global Comment 1> */
-    if (!s)
-    {
+    if (!s) {
         return(SM_NONE);
     }
 
@@ -99,40 +91,31 @@ int str_match(s, slist, n)
     length = strlen(s);
     match = -1;
 
-    for (i = 0; i < n; i++)
-    {
+    for (int i = 0; i < n; i++) {
         /* s, slist[i] are not Nstrings */
-        if (!strncmp(s, slist[i], length))
-        {
+        if (!strncmp(s, slist[i], length)) {
             /* s is at least a prefix */
-            if (length == strlen(slist[i]))
-            {
+            if (length == strlen(slist[i])) {
                 /* exact match */
-                return(i);
+                return i;
             }
 
             /* now we know s is a proper prefix */
-            if (match < 0)
-            {
+            if (match < 0) {
                 /* first match we've seen */
                 match = i;
-            }
-            else
-            {
+            } else {
                 /* s is a proper prefix of more than one string in slist */
-                return(SM_MANY);
+                return SM_MANY;
             }
         }
     }
 
-    if (match < 0)
-    {
+    if (match < 0) {
         /* s is not a prefix of any string in slist */
-        return(SM_NONE);
-    }
-    else
-    {
+        return SM_NONE;
+    } else {
         /* s is a proper prefix of exactly one string in slist */
-        return(match);
+        return match;
     }
 }

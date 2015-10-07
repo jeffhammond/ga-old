@@ -603,17 +603,13 @@ private void ad_print(ad, block_type)
  */
 /* ------------------------------------------------------------------------- */
 
-private void balloc_after(ar, address, client_space, nbytes)
-    AR        *ar;        /* allocation request */
-    Pointer    address;    /* to allocate after */
-    Pointer    *client_space;    /* RETURN: location of client_space */
-    ulongi    *nbytes;    /* RETURN: length of block */
+private void balloc_after(AR * ar, Pointer address, Pointer * client_space, ulongi * nbytes)
 {
-    Integer    datatype;    /* of elements in this block */
+    Integer   datatype;    /* of elements in this block */
     ulongi    L_client_space;    /* length of client_space */
-    Pointer    A_client_space;    /* address of client_space */
-    int        L_gap1;        /* length of gap1 */
-    int        L_gap2;        /* length of gap2 */
+    Pointer   A_client_space;    /* address of client_space */
+    ssize_t    L_gap1;        /* length of gap1 */
+    ssize_t    L_gap2;        /* length of gap2 */
 
     ulongi    B_address;    /* byte equivalent of address */
     ulongi    B_base;        /* byte equivalent of ma_base[datatype] */
@@ -636,14 +632,11 @@ private void balloc_after(ar, address, client_space, nbytes)
 
     L_client_space = ar->nelem * ma_sizeof[datatype];
 
-    L_gap1 = ((long)B_base
-        - (long)B_address
-        - (long)sizeof(AD)
-        - (long)sizeof(Guard))
-        % (long)ma_sizeof[datatype];
+    L_gap1 = (B_base - B_address - sizeof(AD) - sizeof(Guard)) % ma_sizeof[datatype];
 
-    if (L_gap1 < 0)
+    if (L_gap1 < 0) {
         L_gap1 += ma_sizeof[datatype];
+    }
 
     B_client_space = B_address + sizeof(AD) + L_gap1 + sizeof(Guard);
     A_client_space = b2p(B_client_space);
@@ -659,7 +652,7 @@ private void balloc_after(ar, address, client_space, nbytes)
 
     if (ma_numalign > 0) {
       unsigned long mask = (1<<ma_numalign)-1;
-      int diff = ((unsigned long) B_client_space) & mask;
+      size_t diff = ((unsigned long) B_client_space) & mask;
       
       /* Check that the difference is a multiple of the type size.
        * If so, then we can shift the client space which is already
@@ -691,25 +684,18 @@ private void balloc_after(ar, address, client_space, nbytes)
      *        - address
      */
 
-    L_gap2 = ((long)B_address
-        - (long)B_client_space
-        - (long)L_client_space
-        - (long)sizeof(Guard))
-        % (long)ALIGNMENT;
+    L_gap2 = (B_address - B_client_space - L_client_space - sizeof(Guard)) % ALIGNMENT;
 
-    if (L_gap2 < 0)
+    if (L_gap2 < 0) {
         L_gap2 += ALIGNMENT;
+    }
 
     /*
      * set the return values
      */
 
     *client_space = A_client_space;
-    *nbytes = (ulongi)(B_client_space
-        + L_client_space
-        + sizeof(Guard)
-        + L_gap2
-        - B_address);
+    *nbytes = (ulongi)(B_client_space + L_client_space + sizeof(Guard) + L_gap2 - B_address);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -719,21 +705,17 @@ private void balloc_after(ar, address, client_space, nbytes)
  */
 /* ------------------------------------------------------------------------- */
 
-private void balloc_before(ar, address, client_space, nbytes)
-    AR        *ar;        /* allocation request */
-    Pointer    address;    /* to allocate before */
-    Pointer    *client_space;    /* RETURN: location of client_space */
-    ulongi    *nbytes;    /* RETURN: length of block */
+private void balloc_before(AR * ar, Pointer address, Pointer * client_space, ulongi * nbytes)
 {
-    Integer    datatype;    /* of elements in this block */
-    ulongi    L_client_space;    /* length of client_space */
-    Pointer    A_client_space;    /* address of client_space */
-    int        L_gap1;        /* length of gap1 */
-    int        L_gap2;        /* length of gap2 */
+    Integer   datatype;         /* of elements in this block */
+    ulongi    L_client_space;   /* length of client_space */
+    Pointer   A_client_space;   /* address of client_space */
+    ssize_t    L_gap1;           /* length of gap1 */
+    ssize_t    L_gap2;           /* length of gap2 */
 
-    ulongi    B_address;    /* byte equivalent of address */
-    ulongi    B_base;        /* byte equivalent of ma_base[datatype] */
-    ulongi    B_client_space;    /* byte equivalent of A_client_space */
+    ulongi    B_address;        /* byte equivalent of address */
+    ulongi    B_base;           /* byte equivalent of ma_base[datatype] */
+    ulongi    B_client_space;   /* byte equivalent of A_client_space */
 
     datatype = ar->datatype;
 
@@ -752,14 +734,11 @@ private void balloc_before(ar, address, client_space, nbytes)
 
     L_client_space = ar->nelem * ma_sizeof[datatype];
 
-    L_gap2 = (B_address
-        - sizeof(Guard)
-        - L_client_space
-        - B_base)
-        % ma_sizeof[datatype];
+    L_gap2 = (B_address - sizeof(Guard) - L_client_space - B_base) % ma_sizeof[datatype];
 
-    if (L_gap2 < 0)
+    if (L_gap2 < 0) {
         L_gap2 += ma_sizeof[datatype];
+    }
 
     B_client_space = B_address - L_gap2 - sizeof(Guard) - L_client_space;
     A_client_space = b2p(B_client_space);
@@ -775,23 +754,23 @@ private void balloc_before(ar, address, client_space, nbytes)
 
     if (ma_numalign > 0) {
       unsigned long mask = (1<<ma_numalign)-1;
-      int diff = ((unsigned long) B_client_space) & mask;
-      
+      size_t diff = ((unsigned long) B_client_space) & mask;
+
       /* Check that the difference is a multiple of the type size.
        * If so, then we can shift the client space which is already
        * aligned to satisfy this requirement.
        */
 
       if (diff) {
-    if ((diff % ma_sizeof[datatype]) == 0 ) {
-      /* printf("bbefore realigned diff=%d\n",diff); */
-      A_client_space = b2p(B_client_space - diff);
-      B_client_space = p2b(A_client_space);
-    }    
-    /*    else {
-      printf("did not realign diff=%d typelen=%d mod=%d\n",
-         diff, ma_sizeof[datatype], (diff % ma_sizeof[datatype]));
-         }*/
+        if ((diff % ma_sizeof[datatype]) == 0 ) {
+          /* printf("bbefore realigned diff=%d\n",diff); */
+          A_client_space = b2p(B_client_space - diff);
+          B_client_space = p2b(A_client_space);
+        }
+        /* else {
+          printf("did not realign diff=%d typelen=%d mod=%d\n",
+                 diff, ma_sizeof[datatype], (diff % ma_sizeof[datatype]));
+        } */
       }
     }
 
@@ -805,21 +784,14 @@ private void balloc_before(ar, address, client_space, nbytes)
      *    A(AD) == A(client_space) - L(guard1) - L(gap1) - L(AD)
      */
 
-    L_gap1 = (B_client_space
-        - sizeof(Guard)
-        - sizeof(AD))
-        % ALIGNMENT;
+    L_gap1 = (B_client_space - sizeof(Guard) - sizeof(AD)) % ALIGNMENT;
 
     /*
      * set the return values
      */
 
     *client_space = A_client_space;
-    *nbytes = (ulongi)(B_address
-        - B_client_space
-        + sizeof(Guard)
-        + L_gap1
-        + sizeof(AD));
+    *nbytes = (ulongi)(B_address - B_client_space + sizeof(Guard) + L_gap1 + sizeof(AD));
 }
 
 /* ------------------------------------------------------------------------- */
@@ -828,42 +800,31 @@ private void balloc_before(ar, address, client_space, nbytes)
  */
 /* ------------------------------------------------------------------------- */
 
-private void block_free_heap(ad)
-    AD        *ad;        /* AD to free */
+private void block_free_heap(AD * ad)
 {
-    AD        *ad2;        /* traversal pointer */
-    AD        *max_ad;    /* rightmost AD */
+    AD * ad2;       /* traversal pointer */
+    AD * max_ad;    /* rightmost AD */
 
     /* find rightmost heap block */
-    for (max_ad = (AD *)NULL, ad2 = ma_hused; ad2; ad2 = ad2->next)
-    {
-        if (ad2 > max_ad)
-            max_ad = ad2;
+    for (max_ad = (AD *)NULL, ad2 = ma_hused; ad2; ad2 = ad2->next) {
+        if (ad2 > max_ad) max_ad = ad2;
     }
 
-    if (max_ad)
-    {
+    if (max_ad) {
         /* at least 1 block is in use */
 
         /* set ma_hp to first address past end of max_ad */
         ma_hp = (Pointer)max_ad + max_ad->nbytes;
 
         /* delete any free list blocks that are no longer in heap region */
-        (void)list_delete_many(
-            &ma_hfree,
-            ad_gt,
-            (Pointer)max_ad,
-            (void (*)())NULL);
+        (void)list_delete_many( &ma_hfree, ad_gt, (Pointer)max_ad, (void (*)())NULL);
 
         /* if ad is in the heap region, add it to free list */
-        if (ad < max_ad)
-        {
+        if (ad < max_ad) {
             list_insert_ordered(ad, &ma_hfree, ad_lt);
             list_coalesce(ma_hfree);
         }
-    }
-    else
-    {
+    } else {
         /* no blocks are in use */
 
         /* set ma_hp to start of segment */
@@ -881,13 +842,14 @@ private void block_free_heap(ad)
  * and set the lengths of both blocks.
  *
  * Return a pointer to the new block (NULL if not created).
+ *
+ *   AD      * ad;              the AD to split
+ *   ulongi    bytes_needed;    from ad
+ *   Boolean   insert_free;     insert in free list?
  */
 /* ------------------------------------------------------------------------- */
 
-private AD *block_split(ad, bytes_needed, insert_free)
-    AD        *ad;        /* the AD to split */
-    ulongi    bytes_needed;    /* from ad */
-    Boolean    insert_free;    /* insert in free list? */
+private AD *block_split(AD * ad, ulongi bytes_needed, Boolean insert_free)
 {
     ulongi    bytes_extra;    /* in ad */
     AD        *ad2;        /* the new AD */
@@ -895,16 +857,14 @@ private AD *block_split(ad, bytes_needed, insert_free)
     /* caller ensures that ad->nbytes >= bytes_needed */
     bytes_extra = ad->nbytes - bytes_needed;
 
-    if (bytes_extra >= ((ulongi)MINBLOCKSIZE))
-    {
+    if (bytes_extra >= ((ulongi)MINBLOCKSIZE)) {
         /* create a new block */
         ad2 = (AD *)((Pointer)ad + bytes_needed);
 
         /* set the length of ad2 */
         ad2->nbytes = bytes_extra;
 
-        if (insert_free)
-        {
+        if (insert_free) {
             /* insert ad2 into free list */
             list_insert_ordered(ad2, &ma_hfree, ad_lt);
         }
@@ -913,9 +873,7 @@ private AD *block_split(ad, bytes_needed, insert_free)
         ad->nbytes = bytes_needed;
 
         return ad2;
-    }
-    else
-    {
+    } else {
         /*
          * If 0 <= bytes_extra < MINBLOCKSIZE then there are too few
          * extra bytes to form a new block.  In this case, we simply
@@ -936,14 +894,9 @@ private AD *block_split(ad, bytes_needed, insert_free)
  */
 /* ------------------------------------------------------------------------- */
 
-private ulongi checksum(ad)
-    AD        *ad;        /* the AD to compute checksum for */
+private ulongi checksum(AD * ad /* the AD to compute checksum for */)
 {
-    return (ulongi)(
-                ad->datatype +
-                ad->nelem +
-        (ulongi)ad->client_space +
-                ad->nbytes);
+    return (ulongi)( ad->datatype + ad->nelem + (ulongi)ad->client_space + ad->nbytes);
 }
 
 /* ------------------------------------------------------------------------- */
@@ -954,14 +907,12 @@ private ulongi checksum(ad)
 
 #ifdef DEBUG
 
-private void debug_ad_print(ad)
-    AD        *ad;        /* the AD to print */
+private void debug_ad_print(AD * ad /* the AD to print */)
 {
 #define NUMADFIELDS 7
 
     char    *fn[NUMADFIELDS];    /* field names */
     long    fa[NUMADFIELDS];    /* field addresses */
-    int        i;            /* loop index */
     long    address;        /* other addresses */
 
     /* set field names */
@@ -983,36 +934,24 @@ private void debug_ad_print(ad)
     fa[6] = (long)(&(ad->checksum));
 
     /* print AD fields to stderr */
-    (void)fprintf(stderr, "debug_ad_print:\n");
-    for (i = 0; i < NUMADFIELDS; i++)
-        (void)fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  ad->%s\n",
-            fa[i],
-            fa[i] % 4,
-            fa[i] % 8,
-            fa[i] % 16,
-            fn[i]);
+    fprintf(stderr, "debug_ad_print:\n");
+    for (int i = 0; i < NUMADFIELDS; i++) {
+        fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  ad->%s\n",
+                fa[i], fa[i] % 4, fa[i] % 8, fa[i] % 16, fn[i]);
+    }
 
     /* print other addresses to stderr */
     address = (long)guard1(ad);
-    (void)fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  guard1\n",
-        address,
-        address % 4,
-        address % 8,
-        address % 16);
+    fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  guard1\n",
+            address, address % 4, address % 8, address % 16);
     address = (long)ad->client_space;
-    (void)fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  client_space\n",
-        address,
-        address % 4,
-        address % 8,
-        address % 16);
+    fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  client_space\n",
+            address, address % 4, address % 8, address % 16);
     address = (long)guard2(ad);
-    (void)fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  guard2\n",
-        address,
-        address % 4,
-        address % 8,
-        address % 16);
+    fprintf(stderr, "\t0x%lx  mod4,8,16=%d,%d,%-2d  guard2\n",
+            address, address % 4, address % 8, address % 16);
 
-    (void)fflush(stderr);
+    fflush(stderr);
 }
 
 #endif /* DEBUG */
@@ -1024,21 +963,18 @@ private void debug_ad_print(ad)
  */
 /* ------------------------------------------------------------------------- */
 
-private Boolean guard_check(ad)
-    AD        *ad;        /* the AD to check guards for */
+private Boolean guard_check(AD * ad /* the AD to check guards for */)
 {
-    Guard    signature;    /* value to be read */
+    Guard      signature;    /* value to be read */
     Pointer    guard;        /* address to read from */
 
     guard = guard1(ad);
     guard_read(guard, &signature);
-    if (signature != GUARD1)
-        return MA_FALSE;
+    if (signature != GUARD1) return MA_FALSE;
 
     guard = guard2(ad);
     guard_read(guard, &signature);
-    if (signature != GUARD2)
-        return MA_FALSE;
+    if (signature != GUARD2) return MA_FALSE;
 
     /* success */
     return MA_TRUE;
@@ -1374,18 +1310,15 @@ private void list_verify(list, block_type, preamble, blocks,
         if (checksum(ad) != ad->checksum)
         {
             /* print preamble if necessary */
-            if (first_bad_block && (preamble != (char *)NULL))
-            {
-                (void)printf(preamble);
+            if (first_bad_block && (preamble != (char *)NULL)) {
+                printf(preamble);
                 first_bad_block = MA_FALSE;
             }
 
             /* print error message to stdout */
             ad_print(ad, block_type);
-            (void)printf(":\n\t");
-            (void)printf("current checksum %lu != stored checksum %lu\n",
-                checksum(ad),
-                ad->checksum);
+            printf(":\n\t");
+            printf("current checksum %lu != stored checksum %lu\n", checksum(ad), ad->checksum);
 
             /* do bookkeeping */
             (*bad_checksums)++;

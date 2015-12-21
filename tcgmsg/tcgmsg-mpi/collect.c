@@ -147,8 +147,13 @@ void SYNCH_(long *type)
  */
 void BRDCST_(long *type, void *buf, long *lenbuf, long *originator)
 {
+    long l = *lenbuf;
+    if (l > (long)INT_MAX) {
+        Error("BRDCST: integer overflow! ", l);
+    }
+
     /*  hope that MPI int is large enough to store value in lenbuf */
-    int count = (int)*lenbuf, root = (int)*originator;
+    int count = (int)l, root = (int)*originator;
 
     MPI_Bcast(buf, count, MPI_CHAR, root, TCGMSG_Comm);
 }

@@ -25,14 +25,16 @@ void $SUB($1)
 
 void fix_c_string_for_f(char *s, int len)
 {
-    for (size_t i=strlen(s); i < len; i++) {
+    size_t i;
+    for (i=strlen(s); i < len; i++) {
         s[i] = ' ';
     }
 }
 
 void fix_f_string_for_c(char *s, int len)
 {
-    for (ssize_t i=len-1; s[i] == ' ' && i>=0; i--) {
+    size_t i;
+    for (i=len-1; s[i] == ' ' && i>=0; i--) {
         s[i] = '\0';
     }
 }]])],

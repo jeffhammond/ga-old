@@ -99,9 +99,9 @@ static int* am_mutex_waiter = 0;
 static uint32_t reply_tag = 0;
 #define GETTAG() (++reply_tag)
 
-static pthread_spinlock_t mutex_spin;
-static pthread_spinlock_t acc_spin;
-static pthread_spinlock_t poll_spin;
+static fastlock_t mutex_lock;
+static fastlock_t acc_lock;
+static fastlock_t poll_lock;
 static int poll(int* items_processed);
 static pthread_t tid = 0;
 
@@ -614,10 +614,10 @@ do                                         \
     type* dst = (type*)_dst;               \
     type* src = (type*)_src;               \
     int cnt = (_len) / sizeof(type);       \
-    pthread_spin_lock(&acc_spin);          \
+    fastlock_acquire(&acc_lock);          \
     for(i = 0; i < cnt; i++, dst++, src++) \
        *dst += *src;                       \
-    pthread_spin_unlock(&acc_spin);        \
+    fastlock_release(&acc_lock);          \
 } while(0)
 
 static void acc_completion(request_t* request)
@@ -771,7 +771,7 @@ static void atomics_completion(request_t* request)
         case OFI_MUTEX_AM_LOCK:
             assert(am_mutex_locked);
             assert(am_mutex_waiter);
-            pthread_spin_lock(&mutex_spin);
+            fastlock_acquire(&mutex_lock);
 
             if(am_mutex_locked[header.mutex.num] == PROC_NONE)
             { /* mutex is not locked */
@@ -793,7 +793,7 @@ static void atomics_completion(request_t* request)
                 } while(idx != PROC_NONE);
             }
 
-            pthread_spin_unlock(&mutex_spin);
+            fastlock_release(&mutex_lock);
             if(proc != PROC_NONE)
             {
                 int v = 0;
@@ -806,12 +806,12 @@ static void atomics_completion(request_t* request)
         case OFI_MUTEX_AM_UNLOCK:
             assert(am_mutex_locked);
             assert(am_mutex_waiter);
-            pthread_spin_lock(&mutex_spin);
+            fastlock_acquire(&mutex_lock);
             assert(am_mutex_locked[header.mutex.num] == header.proto.proc);
             am_mutex_locked[header.mutex.num] = am_mutex_waiter[header.proto.proc];
             am_mutex_waiter[header.proto.proc] = PROC_NONE;
             proc = am_mutex_locked[header.mutex.num];
-            pthread_spin_unlock(&mutex_spin);
+            fastlock_release(&mutex_lock);
             if(proc != PROC_NONE) /* notify new owner of mutex */
             {
                 int v = 0;

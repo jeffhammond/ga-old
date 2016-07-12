@@ -1562,7 +1562,7 @@ int comex_finalize()
 {
     /* it's okay to call multiple times -- extra calls are no-ops */
     if (!initialized) {
-        return;
+        return COMEX_SUCCESS;
     }
 
     initialized = 0;
